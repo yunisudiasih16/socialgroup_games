@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Societal Roleplay: The Social Ascent</title>
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Konfigurasi Font dan Tema Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#22c55e', // Emerald 500 (Warna baru yang lebih cerah)
+                        'secondary-gray': '#f0fdf4', // Green 50
+                        'accent-orange': '#f59e0b', // Amber 500
+                        'bg-dark': '#064e3b' // Emerald 900
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles untuk memastikan Inter font dimuat */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Warna latar belakang baru */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .option-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .option-button:disabled {
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container" class="w-full max-w-2xl p-4 md:p-8">
+
+        <!-- Tampilan Awal (Start Screen) -->
+        <div id="start-screen" class="card bg-white rounded-2xl p-8 text-center border-t-4 border-primary-blue">
+            <h1 class="text-4xl font-extrabold text-bg-dark mb-2">Societal Roleplay</h1>
+            <p class="text-2xl font-bold text-primary-blue mb-6">The Social Ascent (10 Pos)</p>
+            <p class="text-gray-600 mb-4">Masukkan nama Anda untuk memulai perjalanan peran sosial ini:</p>
+            
+            <!-- Input Nama Siswa -->
+            <input type="text" id="player-name-input" placeholder="Contoh: Rina, Andi, atau nama siswa"
+                   class="w-full p-3 mb-4 border-2 border-primary-blue/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-orange transition duration-200">
+            <p id="name-error" class="text-red-500 text-sm mb-4 hidden">Nama tidak boleh kosong atau terlalu pendek!</p>
+            
+            <button id="start-button" class="bg-accent-orange hover:bg-yellow-600 text-bg-dark font-extrabold py-3 px-8 rounded-full shadow-xl transition duration-300 transform hover:scale-105">
+                Mulai Perjalanan <span aria-hidden="true">&rarr;</span>
+            </button>
+        </div>
+
+        <!-- Tampilan Game (Quiz Screen) -->
+        <div id="quiz-screen" class="card bg-white rounded-2xl p-6 hidden border-t-4 border-primary-blue">
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-sm font-semibold text-accent-orange" id="progress-text">Pos 1 dari 10</div>
+                <div class="text-sm font-bold text-bg-dark">Skor: <span id="current-score">0</span></div>
+            </div>
+            
+            <!-- Area Skenario Karakter -->
+            <div class="bg-secondary-gray p-4 rounded-xl mb-6 border border-primary-blue/30">
+                <h3 class="text-lg font-extrabold text-bg-dark mb-2">Kasus: <span id="player-name-display"></span></h3>
+                <p class="text-gray-700" id="scenario-text"></p>
+            </div>
+
+            <!-- Area Pertanyaan Sosiologi -->
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="question-text"></h3>
+            
+            <!-- Pilihan Jawaban -->
+            <div id="options-container" class="space-y-3">
+                <!-- Tombol Jawaban akan di-inject di sini -->
+            </div>
+
+            <!-- Area Feedback dan Tombol Lanjut -->
+            <div id="feedback-area" class="mt-6 p-4 rounded-xl hidden border">
+                <p id="feedback-text" class="font-medium"></p>
+                <div class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                    <button id="next-button" class="bg-primary-blue hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 hidden shadow-md">
+                        Lanjut Pos Berikutnya <span aria-hidden="true">&rarr;</span>
+                    </button>
+                    <!-- Tombol Simulasi Gemini (untuk fitur eksplorasi) -->
+                    <button id="gemini-explore-button" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition duration-300 shadow-md">
+                        Tanya Gemini: Eksplorasi Konsep
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tampilan Hasil Akhir (End Screen) -->
+        <div id="end-screen" class="card bg-white rounded-2xl p-8 text-center hidden border-t-4 border-primary-blue">
+            <h2 class="text-3xl font-extrabold text-bg-dark mb-4">Misi Selesai!</h2>
+            <p class="text-xl text-gray-700 mb-6">Kamu telah berhasil memandu karakter utama melalui kehidupan sosialnya.</p>
+            <p class="text-xl font-medium text-primary-blue">Pemahaman Sosiologi Kamu:</p>
+            <div id="final-score" class="text-7xl font-extrabold text-accent-orange mb-8 mt-2">0/10</div>
+            <p class="text-gray-600 mb-8" id="end-message"></p>
+            <button id="restart-button" class="bg-primary-blue hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-xl transition duration-300 transform hover:scale-105">
+                Mulai Lagi
+            </button>
+        </div>
+
+        <!-- Modal Simulasi Gemini -->
+        <div id="gemini-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center hidden p-4">
+            <div class="bg-white rounded-xl card p-6 w-full max-w-lg">
+                <h3 class="text-2xl font-bold text-primary-blue mb-4">Eksplorasi Konsep Sosiologi (Gemini)</h3>
+                <p class="text-gray-600 mb-4 text-sm">Ini adalah simulasi fitur bertenaga AI. Di sini, Anda dapat meminta penjelasan mendalam mengenai konsep Sosiologi yang baru saja dibahas atau konsep terkait lainnya.</p>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg mb-4 border border-accent-orange/50">
+                    <p class="text-sm font-semibold text-accent-orange">Simulasi Respons LLM:</p>
+                    <p class="text-gray-800 mt-1 text-sm" id="modal-response-text">Silakan mulai permainan terlebih dahulu.</p>
+                </div>
+
+                <button id="close-modal-button" class="bg-accent-orange hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                    Tutup
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Kuis Sosiologi yang diperluas menjadi 10 Pos. Gunakan '{NAMA_SISWA}' sebagai placeholder.
+        const quizData = [
+            // Pos 1: Kelompok Primer (Keluarga)
+            {
+                scenario: "Pos 1: {NAMA_SISWA} harus memilih respons saat adiknya menolak membersihkan kamar bersama, padahal itu adalah tugas yang diatur oleh ayah dan ibu. Kelompok inti mereka adalah Kelompok Primer.",
+                question: "Apa ciri utama yang mendefinisikan Kelompok Primer (seperti keluarga {NAMA_SISWA})?",
+                options: ["Hubungan didasarkan pada tujuan kerja formal.", "Hubungan bersifat intim, tatap muka, dan kekal.", "Keanggotaan ditentukan oleh surat keputusan.", "Hubungan hanya terjadi sesekali dan impersonal."],
+                correctAnswerIndex: 1,
+                explanation: "Kelompok Primer dicirikan oleh hubungan yang erat, intim, dan personal (tatap muka), seperti keluarga atau sahabat dekat."
+            },
+            // Pos 2: Sosialisasi Primer
+            {
+                scenario: "Pos 2: {NAMA_SISWA} diajarkan oleh ayahnya bahwa nilai kejujuran harus selalu dipegang teguh. Suatu hari, {NAMA_SISWA} melihat temannya menyontek.",
+                question: "Proses penanaman nilai kejujuran oleh keluarga pada masa awal kehidupan {NAMA_SISWA} disebut proses sosiologi apa?",
+                options: ["Sosialisasi Tersier", "Internalitas Kelompok", "Sosialisasi Primer", "Sosialisasi Rekreatif"],
+                correctAnswerIndex: 2,
+                explanation: "Sosialisasi Primer adalah proses sosiologi paling awal yang dialami individu, terutama di lingkungan keluarga, yang membentuk kepribadian dasar."
+            },
+            // Pos 3: Kelompok Sekunder
+            {
+                scenario: "Pos 3: {NAMA_SISWA} bergabung dengan 'Klub Riset Sains' di sekolah. Klub ini memiliki struktur pengurus yang jelas dan jadwal pertemuan yang ketat, serta berorientasi pada target lomba.",
+                question: "Berdasarkan sifat hubungannya yang formal dan berorientasi tujuan, Klub Riset Sains termasuk jenis kelompok apa?",
+                options: ["Kelompok Informal", "Kelompok Primer", "Kelompok Acuan", "Kelompok Sekunder"],
+                correctAnswerIndex: 3,
+                explanation: "Kelompok Sekunder memiliki hubungan yang bersifat impersonal, rasional, dan didasarkan pada kepentingan atau tujuan tertentu, seperti organisasi formal di sekolah."
+            },
+            // Pos 4: In-Group & Out-Group
+            {
+                scenario: "Pos 4: Klub Riset Sains {NAMA_SISWA} sering berdebat sengit dengan 'Klub Seni Budaya' karena memperebutkan alokasi ruang di sekolah. {NAMA_SISWA} dan teman-temannya mulai memandang Klub Seni sebagai 'mereka yang berbeda'.",
+                question: "Pandangan 'kita' (Klub Riset) dan 'mereka yang berbeda' (Klub Seni) dalam sosiologi disebut sebagai perbedaan antara apa?",
+                options: ["Paguyuban dan Patembayan", "In-Group dan Out-Group", "Kelompok Formal dan Informal", "Audience dan Massa"],
+                correctAnswerIndex: 1,
+                explanation: "In-Group ('kita') adalah kelompok di mana individu mengidentifikasi dirinya, sementara Out-Group ('mereka') adalah kelompok yang dipandang berbeda atau bertentangan."
+            },
+            // Pos 5: Kelompok Formal
+            {
+                scenario: "Pos 5: {NAMA_SISWA} terpilih menjadi sekretaris klub. Ia harus mengikuti semua AD/ART, termasuk prosedur pengajuan proposal yang kaku. Ini membuatnya merasa terikat.",
+                question: "Kelompok yang memiliki peraturan tertulis, struktur organisasi yang jelas, dan sengaja dibentuk untuk mencapai tujuan tertentu disebut kelompok apa?",
+                options: ["Kelompok Non-Formal", "Kelompok Informal", "Kelompok Formal", "Masyarakat"],
+                correctAnswerIndex: 2,
+                explanation: "Kelompok Formal dicirikan oleh adanya peraturan tertulis (AD/ART), struktur, dan tujuan yang eksplisit dan jelas."
+            },
+            // Pos 6: Konflik Peran
+            {
+                scenario: "Pos 6: Tugas sekolah {NAMA_SISWA} menumpuk, namun ia juga harus memimpin rapat klub pada malam harinya. {NAMA_SISWA} merasa tertekan karena tuntutan peran sebagai 'siswa' dan 'sekretaris klub' saling bertentangan.",
+                question: "Kesulitan {NAMA_SISWA} dalam memenuhi tuntutan dari dua peran sosial yang berbeda secara bersamaan disebut sebagai...",
+                options: ["Sosialisasi Berulang", "Konflik Status", "Konflik Peran", "Anomie Sosial"],
+                correctAnswerIndex: 2,
+                explanation: "Konflik Peran (Role Conflict) terjadi ketika ekspektasi dari dua atau lebih peran yang dimiliki individu (siswa, anak, pengurus) saling bertentangan atau sulit dipenuhi secara bersamaan."
+            },
+            // Pos 7: Nilai & Norma
+            {
+                scenario: "Pos 7: Salah satu anggota klub {NAMA_SISWA} ketahuan menyebar informasi rahasia rapat kepada tim lain, melanggar *code of conduct* klub (aturan tidak tertulis).",
+                question: "Aturan perilaku (tertulis maupun tidak tertulis) yang dianggap wajib ditaati oleh anggota kelompok dan dilanggar oleh anggota tersebut disebut sebagai...",
+                options: ["Nilai Sosial", "Stigma Sosial", "Norma Sosial", "Faktor Keteraturan"],
+                correctAnswerIndex: 2,
+                explanation: "Norma sosial adalah pedoman atau aturan tentang bagaimana seseorang harus bertindak dalam situasi tertentu. Nilai adalah prinsip yang dianggap baik dan penting, yang menjadi dasar norma."
+            },
+            // Pos 8: Kelompok Referensi
+            {
+                scenario: "Pos 8: {NAMA_SISWA} mulai tertarik pada bidang lingkungan. Ia mengagumi sekelompok aktivis muda yang sukses melakukan kampanye daur ulang di tingkat nasional dan menjadikan mereka sebagai inspirasi tindakannya.",
+                question: "Kelompok aktivis muda yang menjadi standar atau tolok ukur bagi {NAMA_SISWA} dalam menentukan sikap dan tindakan masa depannya disebut kelompok apa?",
+                options: ["Kelompok In-Group", "Kelompok Pembeda", "Kelompok Acuan (Reference Group)", "Kelompok Informal"],
+                correctAnswerIndex: 2,
+                explanation: "Kelompok Acuan (Reference Group) adalah kelompok yang digunakan individu sebagai standar untuk mengevaluasi diri, sikap, atau perilakunya, meskipun ia belum menjadi anggota kelompok tersebut."
+            },
+            // Pos 9: Interaksi Asosiatif (Akomodasi)
+            {
+                scenario: "Pos 9: Setelah berbulan-bulan bersitegang, Klub Riset {NAMA_SISWA} dan Klub Seni Budaya akhirnya setuju untuk bernegosiasi dan mencapai kesepakatan damai untuk berbagi ruangan.",
+                question: "Proses penyelesaian konflik antara dua kelompok untuk mencapai kestabilan tanpa menghancurkan kelompok lain disebut Interaksi Asosiatif jenis apa?",
+                options: ["Persaingan", "Akomodasi", "Kontravensi", "Asimilasi"],
+                correctAnswerIndex: 1,
+                explanation: "Akomodasi adalah upaya untuk meredakan konflik dan mencapai kestabilan sementara, sedangkan Asimilasi adalah peleburan dua kebudayaan menjadi satu."
+            },
+            // Pos 10: Stigma Sosial
+            {
+                scenario: "Pos 10: {NAMA_SISWA} memilih untuk menjadi seniman grafis alih-alih insinyur. Keputusan ini disambut pandangan skeptis dari beberapa tetangga yang menganggap profesi seniman tidak menjanjikan.",
+                question: "Ciri negatif yang melekat pada {NAMA_SISWA} karena pilihan profesinya, yang menyebabkan ia dipandang rendah oleh masyarakat tertentu, disebut...",
+                options: ["Status Ascribed", "Peran Pasif", "Stigma Sosial", "Keterasingan"],
+                correctAnswerIndex: 2,
+                explanation: "Stigma Sosial adalah ciri atau atribut negatif yang mendiskreditkan atau memandang rendah seseorang di mata kelompok sosial yang lebih besar."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+        let playerName = ''; // Variabel untuk menyimpan nama siswa
+
+        // Mendapatkan elemen DOM
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+        const restartButton = document.getElementById('restart-button');
+        const progressText = document.getElementById('progress-text');
+        const currentScoreElement = document.getElementById('current-score');
+        const scenarioText = document.getElementById('scenario-text');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackText = document.getElementById('feedback-text');
+        const finalScore = document.getElementById('final-score');
+        const endMessage = document.getElementById('end-message');
+        const geminiExploreButton = document.getElementById('gemini-explore-button');
+        const geminiModal = document.getElementById('gemini-modal');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const playerNameInput = document.getElementById('player-name-input');
+        const nameError = document.getElementById('name-error');
+        const playerNameDisplay = document.getElementById('player-name-display');
+        const modalResponseText = document.getElementById('modal-response-text');
+
+        // Fungsi Inisialisasi Game
+        function startGame() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                nameError.classList.remove('hidden');
+                return;
+            }
+
+            playerName = name;
+            nameError.classList.add('hidden'); // Sembunyikan pesan error
+
+            currentQuestionIndex = 0;
+            score = 0;
+            isAnswered = false;
+            
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            loadQuestion();
+        }
+
+        // Fungsi Memuat Pertanyaan
+        function loadQuestion() {
+            currentScoreElement.textContent = score;
+
+            if (currentQuestionIndex >= quizData.length) {
+                showEndScreen();
+                return;
+            }
+
+            const currentData = quizData[currentQuestionIndex];
+            
+            // Reset tampilan
+            optionsContainer.innerHTML = '';
+            feedbackArea.classList.add('hidden');
+            nextButton.classList.add('hidden');
+            isAnswered = false;
+
+            // Update UI
+            progressText.textContent = `Pos ${currentQuestionIndex + 1} dari ${quizData.length}`;
+            
+            // LOGIC PENGGANTIAN NAMA UNTUK SKENARIO
+            const personalizedScenario = currentData.scenario.replace(/{NAMA_SISWA}/g, playerName); 
+            scenarioText.textContent = personalizedScenario; 
+            
+            // LOGIC PENGGANTIAN NAMA UNTUK PERTANYAAN (FIX BARU)
+            const personalizedQuestion = currentData.question.replace(/{NAMA_SISWA}/g, playerName); 
+            questionText.textContent = personalizedQuestion;
+
+            // Tampilkan nama di header Kasus
+            playerNameDisplay.textContent = playerName;
+
+            // Buat tombol pilihan
+            currentData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-button', 'w-full', 'text-left', 'bg-secondary-gray', 'hover:bg-primary-blue/20', 'text-gray-800', 'font-medium', 'py-3', 'px-4', 'rounded-lg', 'border', 'border-primary-blue/10');
+                button.dataset.index = index;
+                button.onclick = () => selectOption(button, index, currentData.correctAnswerIndex, currentData.explanation);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Fungsi Memilih Opsi
+        function selectOption(selectedButton, selectedIndex, correctIndex, explanation) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const isCorrect = selectedIndex === correctIndex;
+            
+            // Terapkan personalisasi pada penjelasan sebelum ditampilkan (mengganti placeholder)
+            const personalizedExplanation = explanation.replace(/{NAMA_SISWA}/g, playerName);
+            
+            // Tampilkan feedback
+            feedbackArea.classList.remove('hidden');
+            nextButton.classList.remove('hidden');
+
+            if (isCorrect) {
+                score++;
+                currentScoreElement.textContent = score; 
+                feedbackText.innerHTML = `<span class="text-primary-blue font-bold">BENAR!</span> Keputusanmu tepat.`;
+                feedbackArea.classList.add('bg-green-100', 'border-primary-blue');
+                feedbackArea.classList.remove('bg-red-100', 'border-accent-orange');
+            } else {
+                feedbackText.innerHTML = `<span class="text-accent-orange font-bold">SALAH.</span> Jawaban yang benar adalah **${quizData[currentQuestionIndex].options[correctIndex]}**.`;
+                feedbackArea.classList.add('bg-red-100', 'border-accent-orange');
+                feedbackArea.classList.remove('bg-green-100', 'border-primary-blue');
+            }
+            
+            // Tambahkan penjelasan
+            feedbackText.innerHTML += `<br><span class="text-sm mt-2 block">${personalizedExplanation}</span>`;
+
+            // Nonaktifkan semua tombol dan beri warna
+            Array.from(optionsContainer.children).forEach(button => {
+                const index = parseInt(button.dataset.index);
+                button.disabled = true;
+                button.classList.remove('hover:bg-primary-blue/20', 'bg-secondary-gray', 'border-primary-blue/10', 'text-gray-800');
+                
+                if (index === correctIndex) {
+                    button.classList.add('bg-primary-blue', 'text-white', 'font-extrabold', 'shadow-md');
+                } else if (index === selectedIndex) {
+                    button.classList.add('bg-red-500', 'text-white', 'font-extrabold', 'shadow-md');
+                } else {
+                    button.classList.add('bg-gray-200', 'text-gray-500', 'opacity-70');
+                }
+            });
+        }
+
+        // Fungsi Lanjut ke Pertanyaan Berikutnya
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        // Fungsi Menampilkan Hasil Akhir
+        function showEndScreen() {
+            quizScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+
+            finalScore.textContent = `${score}/${quizData.length}`;
+            let message = '';
+            if (score === quizData.length) {
+                message = "Luar biasa! Pemahaman Sosiologimu telah mencapai puncaknya. Kamu berhasil memandu perjalanan ini dengan pengetahuan yang matang!";
+            } else if (score >= quizData.length * 0.7) {
+                message = "Hebat! Kamu memiliki dasar Sosiologi yang sangat kuat. Ulangi untuk menguasai beberapa konsep minor.";
+            } else if (score >= quizData.length * 0.5) {
+                message = "Kerja bagus! Kamu sudah di jalur yang benar. Gunakan fitur 'Tanya Gemini' untuk memperdalam materi yang belum kamu kuasai.";
+            } else {
+                message = "Terus semangat! Setiap perjalanan dimulai dari langkah kecil. Coba lagi dan perhatikan konsep-konsep kunci di setiap Pos.";
+            }
+            // Tambahkan nama di pesan akhir
+            endMessage.textContent = `${message} Selamat, ${playerName}!`;
+        }
+        
+        // Fungsi Simulasi Panggilan API Gemini (DIUBAH untuk personalisasi)
+        function simulateGeminiCall() {
+            const currentData = quizData[currentQuestionIndex];
+            
+            let conceptText = 'Konsep Sosiologi';
+            if (currentData) {
+                 // Mencoba mengambil kata kunci konsep dari pertanyaan/penjelasan
+                const conceptMatch = currentData.question.replace(/{NAMA_SISWA}/g, playerName).match(/(Kelompok|Sosialisasi|Konflik|Stigma|Norma|Nilai|Peran)/i);
+                conceptText = conceptMatch ? conceptMatch[0] : 'Konsep Sosiologi';
+            }
+
+            modalResponseText.innerHTML = `"Sebagai guru sosiologi, saya bisa menjelaskan bahwa **${conceptText}** yang baru saja ${playerName} hadapi adalah tantangan penting dalam materi Sosiologi. Ini menunjukkan bagaimana interaksi individu dalam kelompok dapat menghasilkan konflik atau akomodasi."`;
+
+            geminiModal.classList.remove('hidden');
+        }
+
+        // Listeners
+        startButton.addEventListener('click', startGame);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', () => {
+             // Kembali ke layar awal dan kosongkan input nama
+             playerNameInput.value = '';
+             startScreen.classList.remove('hidden');
+             endScreen.classList.add('hidden');
+             quizScreen.classList.add('hidden');
+        });
+        geminiExploreButton.addEventListener('click', simulateGeminiCall);
+        closeModalButton.addEventListener('click', () => geminiModal.classList.add('hidden'));
+
+        // Load screen awal saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            startScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            geminiModal.classList.add('hidden');
+        });
+
+    </script>
+
+</body>
+</html>
